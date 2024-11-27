@@ -76,7 +76,10 @@ DATABASE_URL="postgresql://docker:docker@localhost:5432/process-file?schema=publ
 RABBITMQ_URI='amqp://admin:admin@localhost:5672'
 
 # URL de conexão com o banco de dados redis
-REDIS_URL='redis://localhost:6379'
+REDIS_HOST='localhost'
+REDIS_PORT=6379
+REDIS_USERNAME=''
+REDIS_PASSWORD=''
 
 # variável para gerar ou não o diagrama do banco de dados automáticamente
 DISABLE_ERD=falses
@@ -122,9 +125,9 @@ Para realizar o deploy na Vercel, siga os passos abaixo:
 
 7. Configurações adicionais:
    - Na aba "Settings" do projeto na Vercel
-   - Configure o "Build Command" para: npm run build
+   - Configure o "Build Command" para: npm run build && npm run start:prod
    - Configure o "Output Directory" para: dist
-   - Configure o "Install Command" para: npm install
+   - Configure o "Install Command" para: npm install && npx prisma db push
 
 8. Banco de dados e serviços:
    - Configure um banco PostgreSQL (ex: Supabase, Railway)

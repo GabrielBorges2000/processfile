@@ -4,7 +4,10 @@ import { z } from 'zod'
 dotenv.config()
 
 const envSchema = z.object({
-  REDIS_URL: z.string(),
+  REDIS_HOST: z.string(),
+  REDIS_PORT: z.coerce.number(),
+  REDIS_USERNAME: z.string(),
+  REDIS_PASSWORD: z.string(),
   DATABASE_URL: z.string(),
   RABBITMQ_URI: z.string(),
   PORT: z.coerce.number().default(3333),

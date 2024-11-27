@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core'
-import { env } from './env'
+import { env } from '@/env'
 import { Transport } from '@nestjs/microservices'
 import { AppModule } from './app.module'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
@@ -23,7 +23,13 @@ async function start() {
     name: 'REDIS_SERVICE',
     transport: Transport.REDIS,
     options: {
-      url: env.REDIS_URL,
+      host: env.REDIS_HOST,
+      port: env.REDIS_PORT,
+      password: env.REDIS_PASSWORD,
+      username: env.REDIS_USERNAME,
+      tls: {
+        rejectUnauthorized: true,
+      },
     },
   })
 
@@ -37,6 +43,7 @@ async function start() {
   SwaggerModule.setup('docs', app, documentFactory)
 
   await app.startAllMicroservices()
+  app.enableCors()
   await app.listen(env.PORT ?? 3333)
 }
 
