@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common'
+import { Controller, Get, Param, Query } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger'
 import { UsersService } from './users.service'
 
@@ -7,7 +7,7 @@ import { UsersService } from './users.service'
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Get()
+  @Get(':uploadId')
   @ApiOperation({
     summary: 'Recupera dados de usuários com filtros e paginação',
   })
@@ -48,12 +48,6 @@ export class UsersController {
     },
   })
   @ApiResponse({ status: 500, description: 'Erro interno do servidor' })
-  @ApiQuery({
-    name: 'uploadId',
-    required: true,
-    type: String,
-    description: 'ID do upload dos dados',
-  })
   @ApiQuery({
     name: 'page',
     required: false,
@@ -102,8 +96,8 @@ export class UsersController {
     type: String,
     description: 'Filtrar pela cidade',
   })
-  async getData(@Query() query: any) {
-    const { uploadId, page = 1, limit = 20, ...filters } = query
+  async getData(@Query() query: any, @Param('uploadId') uploadId: string) {
+    const { page = 1, limit = 20, ...filters } = query
 
     return await this.usersService.getData(uploadId, filters, +page, +limit)
   }

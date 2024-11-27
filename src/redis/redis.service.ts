@@ -1,4 +1,3 @@
-import { env } from '@/env'
 import { Injectable, Logger } from '@nestjs/common'
 import Redis from 'ioredis'
 
@@ -7,12 +6,7 @@ export class RedisService extends Redis {
   private logger = new Logger(RedisService.name)
 
   constructor() {
-    super({
-      host: env.REDIS_HOST,
-      port: env.REDIS_PORT,
-      password: env.REDIS_PASSWORD,
-      username: env.REDIS_USERNAME,
-    })
+    super()
 
     super.on('error', (error) => {
       this.logger.log('Error on Redis')

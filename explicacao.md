@@ -1,4 +1,4 @@
-## Documentação da Aplicação
+## Documentação da aplicação
 ### Visão Geral
 
 Esta aplicação backend foi desenvolvida utilizando Node.js e TypeScript, com o objetivo de processar e armazenar dados de uma planilha com 100 mil linhas em um banco de dados PostgreSQL, além de disponibilizar uma API avançada para acesso a esses dados. A aplicação utiliza NestJS como framework, que ajuda na organização do código e fornece ferramentas poderosas para construção de APIs robustas.
@@ -7,10 +7,11 @@ Esta aplicação backend foi desenvolvida utilizando Node.js e TypeScript, com o
 
 ### Funcionalidades
 
-**Upload** de Arquivo: Endpoint para upload de arquivos CSV, que inicia o processamento assíncrono dos dados.
+**Upload de Arquivo**: Endpoint para upload de arquivos CSV, que inicia o processamento assíncrono dos dados.
 **Processamento Assíncrono**: Utilização de filas com RabbitMQ para processamento dos dados sem bloquear a thread principal.
 **API de Dados**: Endpoints para listar, filtrar, ordenar e buscar dados armazenados, com suporte a paginação eficiente e filtros avançados.
 **Feedback de Status**: Endpoint para verificar o status do processamento do arquivo.
+**Listagem de Upload**: Endpoint para listar todos os uploads realizados.
 
 ---
 
@@ -23,6 +24,7 @@ Esta aplicação backend foi desenvolvida utilizando Node.js e TypeScript, com o
 **Redis**: Armazenamento de estrutura de dados em memória, usado para caching.
 **Prisma**: ORM para interação com o banco de dados.
 **Swagger**: Ferramenta para documentação de APIs.
+**Zod**: Ferramenta de validação.
 
 ---
 
@@ -48,8 +50,8 @@ ___
 ### Clonando o Repositório
 
 ```bash
-git clone https://github.com/seu-usuario/seu-repositorio.git
-cd seu-repositorio
+git clone https://github.com/GabrielBorges2000/processfile.git
+cd processfile
 ```
 
 ### Instalando Dependências
@@ -69,6 +71,9 @@ npm install
 Copie o arquivo .env.example para .env e ajuste as variáveis conforme necessário.
 
 ```bash
+# Variável para informar o ambiente que está rodando a aplicação
+NODE_ENV='development'
+
 # URL de conexão com o banco de dados postgres
 DATABASE_URL="postgresql://docker:docker@localhost:5432/process-file?schema=public"
 
@@ -82,7 +87,7 @@ REDIS_USERNAME=''
 REDIS_PASSWORD=''
 
 # variável para gerar ou não o diagrama do banco de dados automáticamente
-DISABLE_ERD=falses
+DISABLE_ERD=true
 ```
 
 ### Iniciando os Serviços com Docker
@@ -110,37 +115,37 @@ Para realizar o deploy na Vercel, siga os passos abaixo:
 
 1. Crie uma conta na Vercel.
 2. Instale a CLI da Vercel com npm i -g vercel.
-3. Na raiz do projeto, execute vercel.
+3. Abra o terminal e execute `vercel login`
 4. Siga as instruções na tela para configurar seu usuário localmente.
-5. Configure as variáveis de ambiente na plataforma da Vercel:
-   - Acesse as configurações do projeto
-   - Vá na seção "Environment Variables" 
-   - Adicione todas as variáveis do arquivo .env
 
-6. Conecte seu repositório GitHub:
+
+
+
+
+5. Conecte seu repositório GitHub:
+   - Suba seu projeto para um repositório no Github
    - Na dashboard da Vercel, clique em "Import Project"
    - Escolha "Import Git Repository"
    - Selecione o repositório do projeto
    - Clique em "Deploy"
 
-7. Configurações adicionais:
+6. Configurações adicionais:
    - Na aba "Settings" do projeto na Vercel
    - Configure o "Build Command" para: npm run build && npm run start:prod
-   - Configure o "Output Directory" para: dist
    - Configure o "Install Command" para: npm install && npx prisma db push
 
-8. Banco de dados e serviços:
+7. Banco de dados e serviços:
    - Configure um banco PostgreSQL (ex: Supabase, Railway)
    - Configure um Redis (ex: Upstash, Redis Labs)
    - Configure um RabbitMQ (ex: CloudAMQP)
    - Atualize as variáveis de ambiente com as novas URLs
 
-9. Verifique o deploy:
+8. Verifique o deploy:
    - Monitore o processo de build e deploy
    - Teste a aplicação no domínio fornecido pela Vercel
    - Verifique os logs caso ocorra algum erro
 
-10. Domínio personalizado (opcional):
+9. Domínio personalizado (opcional):
     - Na seção "Domains" das configurações
     - Adicione seu domínio personalizado
     - Siga as instruções para configurar os registros DNS
@@ -158,15 +163,21 @@ A documentação da API está disponível em `/docs` quando a aplicação está 
   - Retorna um ID de processamento para acompanhamento
   - Aceita arquivos até 100MB
   - Formato: multipart/form-data
+  - Inclui mensagem informando como se encontra o upload
 
 #### 2. Status do Processamento  
+- **GET** `/status`
+  - Retorna uma lista com o status atual do processamento de todos os upload de arquivo
+  - Estados possíveis: "em andamento", "concluído", "erro"
+  - Inclui mensagem informando como se encontra o upload
+
 - **GET** `/status/:uploadId`
   - Retorna o status atual do processamento de um arquivo
   - Estados possíveis: "em andamento", "concluído", "erro"
-  - Inclui porcentagem de progresso e mensagens de erro se houver
+  - Inclui mensagem informando como se encontra o upload
 
 #### 3. Consulta de Dados
-- **GET** `/users`
+- **GET** `/users/:uploadId`
   - Lista os registros de forma paginada cpm base no uploadId enviado
   - Parâmetros de query:
     - `page`: Número da página (default: 1)
@@ -175,7 +186,7 @@ A documentação da API está disponível em `/docs` quando a aplicação está 
     - `filters`: Filtros aplicados (ex: city=São Paulo)
 
 #### 4. Filtros Avançados
-- **GET** `/records/filter`
+- **GET** `/users/:uploadId?filter`
   - Permite busca avançada com múltiplos critérios
   - Suporta filtros por:
     - GivenName
@@ -184,7 +195,15 @@ A documentação da API está disponível em `/docs` quando a aplicação está 
     - Occupation
     - Vehicle
     - CountryFull
-    - Permite combinação de filtros usando operadores AND/OR
+    - Permite combinação de filtros usando mais de um campo para uma busca mais refinada
+
+Exemplo:
+```bash
+curl -X GET "http://localhost:3333/users/1a089b30-8a75-4eb1-a3ab-3c23c22d5903?City=Sechelt&GivenName=Eduarda"
+```
+
+No exemplo acima está um exemplo de como realizar a busca pelos campos mencionados.
+
 
 
 ---
@@ -217,30 +236,54 @@ A documentação da API está disponível em `/docs` quando a aplicação está 
 
 **4. Segurança**
 
-- **Autenticação e Autorização**: O sistema deve implementar mecanismos de autenticação e autorização para proteger endpoints sensíveis e garantir que apenas usuários autorizados possam acessar certas funcionalidades.
+
 
 - **Validação de Entradas**: Todas as entradas do usuário são validadas para evitar ataques comuns, como SQL Injection e Cross-Site Scripting (XSS).
 
-**5. Monitoramento e Logs**
+**5. Tratamento de Erros e Logs**
 
 - **Logs de Atividades**: Todas as ações críticas são logadas para permitir auditorias e facilitar a detecção de problemas.
 
-- **Monitoramento de Performance**: O sistema utiliza ferramentas de monitoramento para acompanhar a saúde da aplicação e identificar gargalos de performance.
-
-**6. Tratamento de Erros**
-
 - **Respostas Padronizadas**: O sistema responde com mensagens de erro claras e padronizadas quando ocorrem falhas, facilitando o entendimento dos problemas pelos usuários.
 
-- **Recovery de Falhas**: Implementação de mecanismos de retry e fallback para operações críticas, garantindo a resiliência do sistema.
+- **Validação da variáveis de ambiente**: O sistema verifica se todas as variáveis de ambiente necessárias estão presentes e válidas antes de iniciar, garantindo que a aplicação esteja configurada corretamente para funcionar.
+
 
 **7. Documentação**
 
 - **Documentação da API**: A API é documentada utilizando Swagger, oferecendo uma descrição clara de seus endpoints, parâmetros e respostas esperadas.
 
 
+---
 
 ### Melhorias
 
 - **Estruturação**: Aplicar um designer patter de estruturação de pastas.
 
 - **Testes Automátizados**: Criar testes automátizados unitários, e2e ou integração.
+
+- **Autenticação e Autorização**: Implementar mecanismos de autenticação e autorização para proteger endpoints sensíveis e garantir que apenas usuários autorizados possam acessar certas funcionalidades.
+
+- **Monitoramento de Performance**: O sistema utiliza ferramentas de monitoramento para acompanhar a saúde da aplicação e identificar gargalos de performance.
+
+- **Criar Workflow CI/CD**: Implementar um fluxo de integração e entrega contínuas para automatizar o processo de desenvolvimento, teste e implantação.
+
+- **Subir a aplicação usando Container Docker**: Utilizar contêineres Docker para empacotar a aplicação e suas dependências, garantindo portabilidade e consistência no ambiente de execução.
+
+
+### Observações
+
+ Eu tentei realizar o deploy utilizando a vercel, mas eu tive dificuldade eu conetar o redis e o rabbitmq por algum motivo não estava respondendo em ambiente de produção eu não consegui finalizar o deploy. 
+ 
+ Mas eu já sei onde estava o erro que era no serviço do render onde eu estava subindo meus serviços e eu precisava configurar os IPs que poderiam ter o acesso aos meus serviços e eu não consguia o ip da vercel. 
+
+ Estou ciente de que pode existir outros serviços, mas eu tentei subir como os serviços gratuitos que eu tinha acesso de forma gratuita.
+
+ Na vercel eu consegui realizar o deploy, porém como eu não conssegui configurar o render eu não consegui deixar a API no ar e a minha vps pessoal neste momento infelizmente está fora do ar por um tempo senão eu subiria os serviços por lá e realizava o deploy normalmente na vercel.
+
+ Porém eu deixei a notado nesta documentação o passo a passo de como eu fiz para subir meu aplicativo na vercel.
+
+ Peço também que ignore os commits realizados para esse positório pois foi para tentar ajustar metodos diferentes de conexão que a documentação do render solitava paa que fosse possivel subir o aplicativo,
+ então neste caso não segui o padrão de commits.
+
+ Espero que eu tenha consguido alcançar os objetivo do projeto e desde de já agradeço pela oportunidade.

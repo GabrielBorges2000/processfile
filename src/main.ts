@@ -40,7 +40,6 @@ async function start() {
   SwaggerModule.setup('docs', app, documentFactory)
 
   await app.startAllMicroservices()
-  app.enableCors()
   await app.listen(env.PORT ?? 3333)
 }
 
