@@ -12,7 +12,6 @@ export class RedisService extends Redis {
       port: env.REDIS_PORT,
       password: env.REDIS_PASSWORD,
       username: env.REDIS_USERNAME,
-
     })
 
     super.on('error', (error) => {
